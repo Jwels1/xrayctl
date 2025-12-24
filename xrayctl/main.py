@@ -8,6 +8,8 @@ from xrayctl.errors import XrayHTTPError
 from xrayctl.workflows import system as system_wf
 from xrayctl.workflows import config as config_wf
 from xrayctl.workflows import ignore_rules as ignore_wf
+from xrayctl.workflows import scans as scans_wf
+
 
 
 
@@ -106,6 +108,20 @@ def main() -> None:
             out = ignore_wf.get_rule(client, args.id)
             print_out(out, fmt=settings.fmt)
             return
+        
+        if getattr(args, "handler", None) == "scan_artifact":
+            out = scans_wf.scan_artifact(
+                client,
+                component_id=args.component_id,
+                wait=args.wait,
+                repo=args.repo,
+                path=args.path,
+                poll_seconds=args.poll_seconds,
+                timeout_seconds=args.timeout_seconds,
+            )
+            print_out(out, fmt=settings.fmt)
+            return
+
 
 
         if getattr(args, "handler", None) == "ping":

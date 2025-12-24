@@ -88,4 +88,25 @@ def build_parser() -> argparse.ArgumentParser:
     ir_get.set_defaults(handler="ignore_rules_get")
 
 
+
+    # scan
+    scan = sub.add_parser("scan", help="Trigger Xray scans")
+    scan_sub = scan.add_subparsers(dest="subcommand", required=True)
+
+    scan_art = scan_sub.add_parser("artifact", help="Trigger an on-demand scan for an artifact")
+    scan_art.add_argument(
+        "--component-id",
+        required=True,
+        help="Component identifier (Xray componentID), e.g. docker://alpine:3.20",
+    )
+
+    # Optional: enable waiting/polling if repo+path provided (artifact status API uses these)
+    scan_art.add_argument("--repo", default=None, help="Repo key for status polling (required for --wait)")
+    scan_art.add_argument("--path", default=None, help="Artifact path in repo for status polling (required for --wait)")
+    scan_art.add_argument("--wait", action="store_true", help="Poll status until scan completes (requires --repo and --path)")
+    scan_art.add_argument("--poll-seconds", type=int, default=5, help="Polling interval when --wait is set")
+    scan_art.add_argument("--timeout-seconds", type=int, default=300, help="Max wait time when --wait is set")
+
+    scan_art.set_defaults(handler="scan_artifact")
+
     return p
