@@ -57,4 +57,35 @@ def build_parser() -> argparse.ArgumentParser:
     ir_create.add_argument("--dry-run", action="store_true", help="Print the ignore rule body without creating")
     ir_create.set_defaults(handler="ignore_rules_create")
 
+
+    ir_list = ir_sub.add_parser("list", help="List ignore rules")
+    # Common filters (start small; you can add more later)
+    ir_list.add_argument("--watch", help="Filter by watch name")
+    ir_list.add_argument("--policy", help="Filter by policy name")
+    ir_list.add_argument("--vulnerability", help="Filter by vulnerability id")
+    ir_list.add_argument("--cve", help="Filter by CVE id")
+    ir_list.add_argument("--license", help="Filter by license name")
+    ir_list.add_argument("--component-name", help="Filter by component name")
+    ir_list.add_argument("--component-version", help="Filter by component version")
+
+    # Pagination/sorting (Xray supports these) :contentReference[oaicite:1]{index=1}
+    ir_list.add_argument("--page", type=int, default=1, help="Page number (page_num)")
+    ir_list.add_argument("--rows", type=int, default=50, help="Rows per page (num_of_rows)")
+    ir_list.add_argument("--order-by", default=None, help="Order by field (order_by)")
+    ir_list.add_argument("--direction", choices=["asc", "desc"], default=None, help="Sort direction")
+
+    # Expiration filtering :contentReference[oaicite:2]{index=2}
+    ir_list.add_argument("--expires-before", default=None, help="ISO8601 UTC timestamp")
+    ir_list.add_argument("--expires-after", default=None, help="ISO8601 UTC timestamp")
+
+    # Convenience: fetch all pages
+    ir_list.add_argument("--all", action="store_true", help="Fetch all pages")
+
+    ir_list.set_defaults(handler="ignore_rules_list")
+
+    ir_get = ir_sub.add_parser("get", help="Get a single ignore rule by ID")
+    ir_get.add_argument("id", help="Ignore rule id")
+    ir_get.set_defaults(handler="ignore_rules_get")
+
+
     return p

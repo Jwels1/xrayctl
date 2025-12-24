@@ -11,7 +11,6 @@ from xrayctl.workflows import ignore_rules as ignore_wf
 
 
 
-
 def _require(value: str | None, name: str) -> str:
     if not value:
         raise ValueError(f"Missing required setting: {name} (provide flag, env, or config)")
@@ -79,6 +78,32 @@ def main() -> None:
                 expires_at=args.expires_at,
                 dry_run = args.dry_run
             )
+            print_out(out, fmt=settings.fmt)
+            return
+        
+        if getattr(args, "handler", None) == "ignore_rules_list":
+            out = ignore_wf.list_rules(
+                client,
+                watch=args.watch,
+                policy=args.policy,
+                vulnerability=args.vulnerability,
+                cve=args.cve,
+                license_name=args.license,
+                component_name=args.component_name,
+                component_version=args.component_version,
+                page=args.page,
+                rows=args.rows,
+                order_by=args.order_by,
+                direction=args.direction,
+                expires_before=args.expires_before,
+                expires_after=args.expires_after,
+                fetch_all=args.all,
+            )
+            print_out(out, fmt=settings.fmt)
+            return
+
+        if getattr(args, "handler", None) == "ignore_rules_get":
+            out = ignore_wf.get_rule(client, args.id)
             print_out(out, fmt=settings.fmt)
             return
 
