@@ -109,4 +109,18 @@ def build_parser() -> argparse.ArgumentParser:
 
     scan_art.set_defaults(handler="scan_artifact")
 
+
+    # artifacts
+    arts = sub.add_parser("artifacts", help="Artifact inventory commands")
+    arts_sub = arts.add_subparsers(dest="subcommand", required=True)
+
+    arts_refresh = arts_sub.add_parser("refresh", help="Fetch all artifacts across all repos and write to disk")
+    arts_refresh.add_argument("--out", default="artifacts.parquet", help="Output file (.parquet or .csv)")
+    arts_refresh.add_argument("--page-size", type=int, default=200, help="Artifacts page size per request")
+    arts_refresh.add_argument("--repo-page-size", type=int, default=200, help="Repos page size per request")
+    arts_refresh.add_argument("--repo-regex", default=None, help="Only include repos whose name matches this regex")
+    arts_refresh.add_argument("--include-repo-metadata", action="store_true", help="Add repo metadata columns if available")
+    arts_refresh.set_defaults(handler="artifacts_refresh")
+
+
     return p

@@ -9,7 +9,7 @@ from xrayctl.workflows import system as system_wf
 from xrayctl.workflows import config as config_wf
 from xrayctl.workflows import ignore_rules as ignore_wf
 from xrayctl.workflows import scans as scans_wf
-
+from xrayctl.workflows import artifacts as artifacts_wf
 
 
 
@@ -118,6 +118,18 @@ def main() -> None:
                 path=args.path,
                 poll_seconds=args.poll_seconds,
                 timeout_seconds=args.timeout_seconds,
+            )
+            print_out(out, fmt=settings.fmt)
+            return
+
+        if getattr(args, "handler", None) == "artifacts_refresh":
+            out = artifacts_wf.refresh_inventory(
+                client,
+                out_path=args.out,
+                page_size=args.page_size,
+                repo_page_size=args.repo_page_size,
+                repo_regex=args.repo_regex,
+                include_repo_metadata=args.include_repo_metadata,
             )
             print_out(out, fmt=settings.fmt)
             return
