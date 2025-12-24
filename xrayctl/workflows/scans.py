@@ -22,6 +22,16 @@ def scan_artifact(
     poll_seconds: int,
     timeout_seconds: int,
 ) -> Dict[str, Any]:
+    """
+    Retrieve a single ignore rule and normalize output.
+
+    Args:
+        client: Initialized XrayClient.
+        rule_id: Ignore rule identifier.
+
+    Returns:
+        Structured ignore rule response.
+    """
     if not component_id.strip():
         raise ValueError("--component-id must not be empty")
 

@@ -53,6 +53,26 @@ def refresh_inventory(
     repo_regex: Optional[str],
     include_repo_metadata: bool,
 ) -> Dict[str, Any]:
+    """
+    Refresh the local artifact inventory cache across all repositories.
+
+    This function:
+    - Fetches all repositories
+    - Fetches all artifacts per repository
+    - Normalizes artifacts into a flat table
+    - Persists the result to disk
+
+    Args:
+        client: Initialized XrayClient.
+        out_path: Output file path (.parquet or .csv).
+        page_size: Artifacts page size.
+        repo_page_size: Repository page size.
+        repo_regex: Optional regex to filter repositories.
+        include_repo_metadata: Whether to include repo metadata columns.
+
+    Returns:
+        Summary of refresh operation including counts and output path.
+    """
     if page_size < 1:
         raise ValueError("--page-size must be >= 1")
     if repo_page_size < 1:

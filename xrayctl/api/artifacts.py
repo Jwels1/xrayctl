@@ -10,6 +10,18 @@ def list_artifacts(
     offset: int = 0,
     num_of_rows: int = 200,
 ) -> Any:
+    """
+    Retrieve repositories known to Xray (paged).
+
+    Args:
+        client: Initialized XrayClient.
+        offset: Pagination offset returned by previous response.
+        num_of_rows: Number of repositories per page.
+        search: Optional search string to filter repo names.
+
+    Returns:
+        API response containing repository metadata and paging info.
+    """
     params: Dict[str, Any] = {
         "repo": repo,
         "offset": offset,

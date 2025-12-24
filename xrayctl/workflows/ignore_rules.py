@@ -14,6 +14,23 @@ def build_payload(
     licenses: List[str],
     expires_at: Optional[str]
 ) -> Dict[str, Any]:
+    """
+    Build the request payload for creating an ignore rule.
+
+    Args:
+        note: Human-readable reason for the ignore rule.
+        watches: Watch names to scope the rule.
+        cves: CVE identifiers.
+        vulns: Xray vulnerability identifiers.
+        licenses: License names or 'any'.
+        expires_at: Optional expiration timestamp (ISO8601).
+
+    Returns:
+        Ignore rule payload.
+
+    Raises:
+        ValueError: If no ignore filters are provided.
+    """
     if not note.strip():
         raise ValueError("--note must not be empty")
 
@@ -49,6 +66,21 @@ def create(
     expires_at: Optional[str],
     dry_run: Optional[bool]
 ) -> Dict[str, Any]:
+    """
+    Create an ignore rule via Xray.
+
+    Args:
+        client: Initialized XrayClient.
+        note: Reason for ignore rule.
+        watches: Watch names.
+        cves: CVE identifiers.
+        vulns: Vulnerability identifiers.
+        licenses: License names.
+        expires_at: Optional expiration timestamp.
+
+    Returns:
+        Structured result containing request and response.
+    """
     payload = build_payload(
         note=note,
         watches=watches,
@@ -134,6 +166,21 @@ def list_rules(
     expires_after: Optional[str],
     fetch_all: bool,
 ) -> Dict[str, Any]:
+    """
+    Create an ignore rule via Xray.
+
+    Args:
+        client: Initialized XrayClient.
+        note: Reason for ignore rule.
+        watches: Watch names.
+        cves: CVE identifiers.
+        vulns: Vulnerability identifiers.
+        licenses: License names.
+        expires_at: Optional expiration timestamp.
+
+    Returns:
+        Structured result containing request and response.
+    """
     if page < 1:
         raise ValueError("--page must be >= 1")
     if rows < 1:
@@ -195,6 +242,16 @@ def list_rules(
 
 
 def get_ignore_rule(client: XrayClient, rule_id: str) -> Any:
+    """
+    Retrieve a single ignore rule and normalize output.
+
+    Args:
+        client: Initialized XrayClient.
+        rule_id: Ignore rule identifier.
+
+    Returns:
+        Structured ignore rule response.
+    """
     params: Optional[Dict[str, Any]] = None
     if client.project:
         params = {"projectKey": client.project}
