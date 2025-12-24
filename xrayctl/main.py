@@ -7,6 +7,8 @@ from xrayctl.api.client import XrayClient
 from xrayctl.errors import XrayHTTPError
 from xrayctl.workflows import system as system_wf
 from xrayctl.workflows import config as config_wf
+from xrayctl.workflows import ignore_rules as ignore_wf
+
 
 
 
@@ -65,6 +67,21 @@ def main() -> None:
             timeout=settings.timeout,
             project=settings.project,
         )
+
+        if getattr(args, "handler", None) == "ignore_rules_create":
+            out = ignore_wf.create(
+                client,
+                note=args.note,
+                watches=args.watch,
+                cves=args.cve,
+                vulns=args.vuln,
+                licenses=args.license,
+                expires_at=args.expires_at,
+                dry_run = args.dry_run
+            )
+            print_out(out, fmt=settings.fmt)
+            return
+
 
         if getattr(args, "handler", None) == "ping":
             out = system_wf.ping(client)

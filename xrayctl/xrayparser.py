@@ -36,4 +36,25 @@ def build_parser() -> argparse.ArgumentParser:
     cfg_save = cfg_sub.add_parser("save", help="Save provided flags into the config file (only fields you passed)")
     cfg_save.set_defaults(handler="config_save")
 
+
+    # ignore-rules
+    ir = sub.add_parser("ignore-rules", help="Ignore rules operations")
+    ir_sub = ir.add_subparsers(dest="subcommand", required=True)
+
+    ir_create = ir_sub.add_parser("create", help="Create an ignore rule")
+    ir_create.add_argument("--note", required=True, help="Notes for the ignore rule")
+
+    # filters (repeatable)
+    ir_create.add_argument("--watch", action="append", default=[], help="Watch name (repeatable)")
+    ir_create.add_argument("--cve", action="append", default=[], help="CVE id (repeatable), e.g. CVE-2024-1234")
+    ir_create.add_argument("--vuln", action="append", default=[], help="Xray vulnerability id (repeatable)")
+    ir_create.add_argument("--license", action="append", default=[], help="License name or 'any' (repeatable)")
+
+    # optional scope-like filters you’ll likely want soon (start minimal)
+    # ir_create.add_argument("--repo", action="append", default=[], help="Repo key (repeatable)")
+
+    ir_create.add_argument("--expires-at", default=None, help="ISO8601 UTC timestamp, e.g. 2026-01-01T00:00:00Z")
+    ir_create.add_argument("--dry-run", action="store_true", help="Print the ignore rule body without creating")
+    ir_create.set_defaults(handler="ignore_rules_create")
+
     return p
