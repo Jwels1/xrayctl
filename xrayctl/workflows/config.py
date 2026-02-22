@@ -1,28 +1,28 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from pathlib import Path
+from typing import Any, Dict, Optional, Union
 
-from xrayctl.config import default_config, load_settings, update_config, write_config
+from xrayctl.config import DEFAULT_CONFIG_PATH, default_config, load_settings, update_config, write_config
 
 _ALLOWED_KEYS = {"url", "token", "project", "timeout", "format"}
 
 
 def init_config(config_path: Optional[str]) -> Dict[str, Any]:
-    # Create default config (overwrites if already exists; you can change to "only if missing" later)
-    path = write_config(default_config(), config_path=config_path)
-    return {"ok": True, "path": str(path)}
+    path = Path(config_path).expanduser() if config_path else DEFAULT_CONFIG_PATH
+    if path.exists():
+        return {"ok": False, "path": str(path), "error": "Config file already exists. Use 'config set' to update values."}
+    written = write_config(default_config(), config_path=config_path)
+    return {"ok": True, "path": str(written)}
 
 
 def set_value(config_path: Optional[str], key: str, value: str) -> Dict[str, Any]:
     if key not in _ALLOWED_KEYS:
         raise ValueError(f"Unsupported key: {key}")
 
-    # basic coercion
-    if key == "timeout":
-        value = int(value)
-
-    path = update_config({key: value}, config_path=config_path)
-    return {"ok": True, "path": str(path), "updated": {key: value}}
+    coerced: Union[str, int] = int(value) if key == "timeout" else value
+    path = update_config({key: coerced}, config_path=config_path)
+    return {"ok": True, "path": str(path), "updated": {key: coerced}}
 
 
 def save_from_flags(args) -> Dict[str, Any]:

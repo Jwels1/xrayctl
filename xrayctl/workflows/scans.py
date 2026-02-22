@@ -23,14 +23,19 @@ def scan_artifact(
     timeout_seconds: int,
 ) -> Dict[str, Any]:
     """
-    Retrieve a single ignore rule and normalize output.
+    Trigger an on-demand artifact scan, with optional polling until completion.
 
     Args:
         client: Initialized XrayClient.
-        rule_id: Ignore rule identifier.
+        component_id: Xray component identifier (e.g. docker://alpine:3.20).
+        wait: If True, poll until scan reaches a terminal status.
+        repo: Repository key, required when wait=True.
+        path: Artifact path in repo, required when wait=True.
+        poll_seconds: Interval between status polls.
+        timeout_seconds: Maximum time to wait for scan completion.
 
     Returns:
-        Structured ignore rule response.
+        Structured result with scan initiation response and final status if wait=True.
     """
     if not component_id.strip():
         raise ValueError("--component-id must not be empty")

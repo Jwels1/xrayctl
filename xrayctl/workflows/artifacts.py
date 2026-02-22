@@ -20,7 +20,7 @@ def _iter_all_repos(client: XrayClient, *, page_size: int) -> List[Dict[str, Any
         repos.extend(data)
 
         next_offset = resp.get("offset", -1)
-        if next_offset == -1:
+        if next_offset == -1 or not data or int(next_offset) == offset:
             break
         offset = int(next_offset)
 
@@ -37,7 +37,7 @@ def _iter_all_artifacts_for_repo(client: XrayClient, *, repo: str, page_size: in
         rows.extend(data)
 
         next_offset = resp.get("offset", -1)
-        if next_offset == -1:
+        if next_offset == -1 or not data or int(next_offset) == offset:
             break
         offset = int(next_offset)
 

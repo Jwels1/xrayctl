@@ -167,19 +167,27 @@ def list_rules(
     fetch_all: bool,
 ) -> Dict[str, Any]:
     """
-    Create an ignore rule via Xray.
+    List ignore rules with optional filtering and pagination.
 
     Args:
         client: Initialized XrayClient.
-        note: Reason for ignore rule.
-        watches: Watch names.
-        cves: CVE identifiers.
-        vulns: Vulnerability identifiers.
-        licenses: License names.
-        expires_at: Optional expiration timestamp.
+        watch: Filter by watch name.
+        policy: Filter by policy name.
+        vulnerability: Filter by vulnerability id.
+        cve: Filter by CVE id.
+        license_name: Filter by license name.
+        component_name: Filter by component name.
+        component_version: Filter by component version.
+        page: Page number (1-based).
+        rows: Rows per page.
+        order_by: Field to order by.
+        direction: Sort direction ('asc' or 'desc').
+        expires_before: Filter rules expiring before this timestamp.
+        expires_after: Filter rules expiring after this timestamp.
+        fetch_all: If True, auto-paginate and return all results.
 
     Returns:
-        Structured result containing request and response.
+        Structured result containing params and response data.
     """
     if page < 1:
         raise ValueError("--page must be >= 1")
@@ -252,8 +260,4 @@ def get_ignore_rule(client: XrayClient, rule_id: str) -> Any:
     Returns:
         Structured ignore rule response.
     """
-    params: Optional[Dict[str, Any]] = None
-    if client.project:
-        params = {"projectKey": client.project}
-    # Usage: GET /xray/api/v1/ignore_rules/{id} :contentReference[oaicite:1]{index=1}
-    return client.request("GET", f"/xray/api/v1/ignore_rules/{rule_id}", params=params)
+    return ignore_api.get_ignore_rule(client, rule_id)

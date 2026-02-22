@@ -105,7 +105,7 @@ def main() -> None:
             return
 
         if getattr(args, "handler", None) == "ignore_rules_get":
-            out = ignore_wf.get_rule(client, args.id)
+            out = ignore_wf.get_ignore_rule(client, args.id)
             print_out(out, fmt=settings.fmt)
             return
         
