@@ -3,6 +3,80 @@ from typing import Any, Dict, List, Optional
 
 from xrayctl.api.client import XrayClient
 from xrayctl.api import ignore_rules as ignore_api
+from xrayctl.api import artifactory as artifactory_api
+
+# Maps Artifactory package-type property keys to (name_key, version_key).
+# Values are lists so the first populated key wins.
+# Add entries here when you encounter a package type not yet covered.
+_PROPERTY_NAME_KEYS: list[str] = [
+    "npm.name",
+    "pypi.name",
+    "maven.artifactId",
+    "nuget.id",
+    "helm.name",
+    "deb.name",
+    "rpm.metadata.name",
+    "gem.name",
+    "bower.name",
+]
+
+_PROPERTY_VERSION_KEYS: list[str] = [
+    "npm.version",
+    "pypi.version",
+    "maven.version",
+    "nuget.version",
+    "helm.version",
+    "deb.version",
+    "rpm.metadata.version",
+    "gem.version",
+    "bower.version",
+]
+
+
+def _resolve_artifact_name_version(
+    properties_resp: Any,
+) -> tuple[str, Optional[str]]:
+    """
+    Extract artifact name and version from an Artifactory properties API response.
+
+    Tries each key in _PROPERTY_NAME_KEYS / _PROPERTY_VERSION_KEYS in order and
+    returns the first populated value. To support additional package types, add
+    entries to those module-level lists.
+
+    Args:
+        properties_resp: Response dict from GET /artifactory/api/storage/{path}?properties.
+
+    Returns:
+        Tuple of (name, version). Version is None when no version property is found.
+
+    Raises:
+        ValueError: If no recognised name property is present in the response.
+    """
+    props: dict[str, list[str]] = (
+        properties_resp.get("properties", {}) if isinstance(properties_resp, dict) else {}
+    )
+
+    name: Optional[str] = None
+    for key in _PROPERTY_NAME_KEYS:
+        values = props.get(key)
+        if values:
+            name = values[0]
+            break
+
+    if not name:
+        raise ValueError(
+            f"Could not determine artifact name from properties: {list(props.keys())}. "
+            "Add the relevant property key to _PROPERTY_NAME_KEYS in workflows/ignore_rules.py."
+        )
+
+    version: Optional[str] = None
+    for key in _PROPERTY_VERSION_KEYS:
+        values = props.get(key)
+        if values:
+            version = values[0]
+            break
+
+    return name, version
 
 
 def build_payload(
@@ -12,7 +86,10 @@ def build_payload(
     cves: List[str],
     vulns: List[str],
     licenses: List[str],
-    expires_at: Optional[str]
+    expires_at: Optional[str],
+    artifact_name: Optional[str] = None,
+    artifact_version: Optional[str] = None,
+    artifact_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Build the request payload for creating an ignore rule.
@@ -24,6 +101,9 @@ def build_payload(
         vulns: Xray vulnerability identifiers.
         licenses: License names or 'any'.
         expires_at: Optional expiration timestamp (ISO8601).
+        artifact_name: Artifact name to scope the rule to.
+        artifact_version: Artifact version to scope the rule to.
+        artifact_path: Artifact repo path to scope the rule to.
 
     Returns:
         Ignore rule payload.
@@ -45,8 +125,21 @@ def build_payload(
     if licenses:
         ignore_filters["licenses"] = licenses
 
+    artifact: Dict[str, str] = {}
+    if artifact_version or artifact_path:
+        if not artifact_name:
+            raise ValueError("--artifact-name is required when using --artifact-version or --artifact-path")
+    if artifact_name:
+        artifact["name"] = artifact_name
+    if artifact_version:
+        artifact["version"] = artifact_version
+    if artifact_path:
+        artifact["path"] = artifact_path
+    if artifact:
+        ignore_filters["artifact"] = [artifact]
+
     if not ignore_filters:
-        raise ValueError("Provide at least one filter: --watch/--cve/--vuln/--license")
+        raise ValueError("Provide at least one filter: --watch/--cve/--vuln/--license/--artifact-*")
 
     payload: Dict[str, Any] = {"notes": note, "ignore_filters": ignore_filters}
     if expires_at:
@@ -64,7 +157,10 @@ def create(
     vulns: List[str],
     licenses: List[str],
     expires_at: Optional[str],
-    dry_run: Optional[bool]
+    dry_run: Optional[bool],
+    artifact_name: Optional[str] = None,
+    artifact_version: Optional[str] = None,
+    artifact_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Create an ignore rule via Xray.
@@ -77,10 +173,20 @@ def create(
         vulns: Vulnerability identifiers.
         licenses: License names.
         expires_at: Optional expiration timestamp.
+        artifact_name: Artifact name to scope the rule to.
+        artifact_version: Artifact version to scope the rule to.
+        artifact_path: Artifact repo path to scope the rule to.
 
     Returns:
         Structured result containing request and response.
     """
+    if artifact_path and not artifact_name:
+        info = artifactory_api.get_artifact_properties(client, artifact_path)
+        resolved_name, resolved_version = _resolve_artifact_name_version(info)
+        artifact_name = resolved_name
+        if artifact_version is None:
+            artifact_version = resolved_version
+
     payload = build_payload(
         note=note,
         watches=watches,
@@ -88,6 +194,9 @@ def create(
         vulns=vulns,
         licenses=licenses,
         expires_at=expires_at,
+        artifact_name=artifact_name,
+        artifact_version=artifact_version,
+        artifact_path=artifact_path,
     )
     if dry_run:
         return {"ok": True, "request": payload}

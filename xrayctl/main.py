@@ -11,6 +11,7 @@ from xrayctl.workflows import config as config_wf
 from xrayctl.workflows import ignore_rules as ignore_wf
 from xrayctl.workflows import scans as scans_wf
 from xrayctl.workflows import artifacts as artifacts_wf
+from xrayctl.workflows import violations as violations_wf
 
 
 
@@ -90,7 +91,10 @@ def main() -> None:
                 vulns=args.vuln,
                 licenses=args.license,
                 expires_at=args.expires_at,
-                dry_run = args.dry_run
+                dry_run=args.dry_run,
+                artifact_name=args.artifact_name,
+                artifact_version=args.artifact_version,
+                artifact_path=args.artifact_path,
             )
             print_out(out, fmt=settings.fmt)
             return
@@ -148,6 +152,34 @@ def main() -> None:
             return
 
 
+
+        if h == "violations_list":
+            out = violations_wf.list_violations(
+                client,
+                watch=args.watch,
+                severities=args.severities or None,
+                cve=args.cve,
+                created_from=args.created_from,
+                created_to=args.created_to,
+                limit=args.limit,
+                order_by=args.order_by,
+                direction=args.direction,
+                fetch_all=args.all,
+            )
+            print_out(out, fmt=settings.fmt)
+            return
+
+        if h == "violations_cve":
+            out = violations_wf.cve_lookup(
+                client,
+                cve_id=args.cve_id,
+                limit=args.limit,
+                order_by=args.order_by,
+                direction=args.direction,
+                fetch_all=args.all,
+            )
+            print_out(out, fmt=settings.fmt)
+            return
 
         if getattr(args, "handler", None) == "ping":
             out = system_wf.ping(client)

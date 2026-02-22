@@ -56,6 +56,10 @@ def build_parser() -> argparse.ArgumentParser:
     # optional scope-like filters you’ll likely want soon (start minimal)
     # ir_create.add_argument("--repo", action="append", default=[], help="Repo key (repeatable)")
 
+    ir_create.add_argument("--artifact-name", default=None, help="Artifact name to scope the rule to (auto-resolved from --artifact-path if omitted)")
+    ir_create.add_argument("--artifact-version", default=None, help="Artifact version to scope the rule to (auto-resolved from --artifact-path if omitted)")
+    ir_create.add_argument("--artifact-path", default=None, help="Artifact repo path to scope the rule to (e.g. my-repo/path/to/artifact)")
+
     ir_create.add_argument("--expires-at", default=None, help="ISO8601 UTC timestamp, e.g. 2026-01-01T00:00:00Z")
     ir_create.add_argument("--dry-run", action="store_true", help="Print the ignore rule body without creating")
     ir_create.set_defaults(handler="ignore_rules_create")
@@ -111,6 +115,32 @@ def build_parser() -> argparse.ArgumentParser:
     scan_art.add_argument("--timeout-seconds", type=int, default=300, help="Max wait time when --wait is set")
 
     scan_art.set_defaults(handler="scan_artifact")
+
+
+    # vulnerabilities
+    vulns = sub.add_parser("violations", help="Violation queries")
+    vulns_sub = vulns.add_subparsers(dest="subcommand", required=True)
+
+    vulns_list = vulns_sub.add_parser("list", help="List violations")
+    vulns_list.add_argument("--watch", default=None)
+    vulns_list.add_argument("--severity", action="append", default=[], dest="severities",
+                            help="Repeatable: Critical, High, Medium, Low")
+    vulns_list.add_argument("--cve", default=None)
+    vulns_list.add_argument("--created-from", default=None, help="ISO8601 UTC lower bound")
+    vulns_list.add_argument("--created-to", default=None, help="ISO8601 UTC upper bound")
+    vulns_list.add_argument("--limit", type=int, default=25)
+    vulns_list.add_argument("--order-by", default="created")
+    vulns_list.add_argument("--direction", choices=["asc", "desc"], default="asc")
+    vulns_list.add_argument("--all", action="store_true", help="Fetch all pages")
+    vulns_list.set_defaults(handler="violations_list")
+
+    vulns_cve = vulns_sub.add_parser("cve", help="Look up violations for a specific CVE")
+    vulns_cve.add_argument("cve_id", help="e.g. CVE-2024-1234")
+    vulns_cve.add_argument("--limit", type=int, default=25)
+    vulns_cve.add_argument("--order-by", default="created")
+    vulns_cve.add_argument("--direction", choices=["asc", "desc"], default="asc")
+    vulns_cve.add_argument("--all", action="store_true", help="Fetch all pages")
+    vulns_cve.set_defaults(handler="violations_cve")
 
 
     # artifacts
