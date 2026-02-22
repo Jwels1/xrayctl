@@ -18,6 +18,9 @@ def build_parser() -> argparse.ArgumentParser:
     ping = sub.add_parser("ping", help="Check connectivity/auth against Xray")
     ping.set_defaults(handler="ping")
 
+    ver = sub.add_parser("version", help="Print the xrayctl version")
+    ver.set_defaults(handler="version")
+
     # --- NEW: config commands ---
     cfg = sub.add_parser("config", help="Manage xrayctl configuration")
     cfg_sub = cfg.add_subparsers(dest="subcommand", required=True)
@@ -120,6 +123,7 @@ def build_parser() -> argparse.ArgumentParser:
     arts_refresh.add_argument("--repo-page-size", type=int, default=200, help="Repos page size per request")
     arts_refresh.add_argument("--repo-regex", default=None, help="Only include repos whose name matches this regex")
     arts_refresh.add_argument("--include-repo-metadata", action="store_true", help="Add repo metadata columns if available")
+    arts_refresh.add_argument("--verbose", action="store_true", help="Print per-repo progress to stderr")
     arts_refresh.set_defaults(handler="artifacts_refresh")
 
 

@@ -226,3 +226,40 @@ def test_refresh_inventory_adds_repo_column(tmp_path: Path, mock_client: MagicMo
             )
     df = pd.read_parquet(out_path)
     assert df["repo"].iloc[0] == "my-repo"
+
+
+def test_refresh_inventory_verbose_prints_to_stderr(
+    tmp_path: Path, mock_client: MagicMock, capsys: pytest.CaptureFixture
+) -> None:
+    out_path = str(tmp_path / "artifacts.parquet")
+    repo_page = {"data": [{"repo": "repo-a"}, {"repo": "repo-b"}], "offset": -1}
+    art_page = {"data": [{"name": "lib.jar"}, {"name": "lib2.jar"}], "offset": -1}
+    with patch("xrayctl.api.repos.list_repos", return_value=repo_page):
+        with patch("xrayctl.api.artifacts.list_artifacts", return_value=art_page):
+            refresh_inventory(
+                mock_client, out_path=out_path,
+                page_size=200, repo_page_size=200,
+                repo_regex=None, include_repo_metadata=False,
+                verbose=True,
+            )
+    err = capsys.readouterr().err
+    assert "repo-a" in err
+    assert "repo-b" in err
+    assert "2 artifacts" in err
+
+
+def test_refresh_inventory_silent_by_default(
+    tmp_path: Path, mock_client: MagicMock, capsys: pytest.CaptureFixture
+) -> None:
+    out_path = str(tmp_path / "artifacts.parquet")
+    repo_page = {"data": [{"repo": "my-repo"}], "offset": -1}
+    art_page = {"data": [{"name": "lib.jar"}], "offset": -1}
+    with patch("xrayctl.api.repos.list_repos", return_value=repo_page):
+        with patch("xrayctl.api.artifacts.list_artifacts", return_value=art_page):
+            refresh_inventory(
+                mock_client, out_path=out_path,
+                page_size=200, repo_page_size=200,
+                repo_regex=None, include_repo_metadata=False,
+            )
+    err = capsys.readouterr().err
+    assert err == ""

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import sys
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -52,6 +53,7 @@ def refresh_inventory(
     repo_page_size: int,
     repo_regex: Optional[str],
     include_repo_metadata: bool,
+    verbose: bool = False,
 ) -> Dict[str, Any]:
     """
     Refresh the local artifact inventory cache across all repositories.
@@ -95,8 +97,12 @@ def refresh_inventory(
 
     all_rows: List[Dict[str, Any]] = []
 
-    for repo_name, repo_meta in repo_entries:
+    for i, (repo_name, repo_meta) in enumerate(repo_entries, 1):
+        if verbose:
+            print(f"[{i}/{len(repo_entries)}] {repo_name}...", end="", flush=True, file=sys.stderr)
         artifacts = _iter_all_artifacts_for_repo(client, repo=repo_name, page_size=page_size)
+        if verbose:
+            print(f" {len(artifacts)} artifacts", file=sys.stderr)
         for a in artifacts:
             row = dict(a)
             row["repo"] = repo_name  # <-- the key requirement

@@ -1,4 +1,5 @@
 import sys
+from importlib.metadata import version as _pkg_version, PackageNotFoundError
 
 from xrayctl.xrayparser import build_parser
 from xrayctl.config import load_settings
@@ -11,6 +12,13 @@ from xrayctl.workflows import ignore_rules as ignore_wf
 from xrayctl.workflows import scans as scans_wf
 from xrayctl.workflows import artifacts as artifacts_wf
 
+
+
+def _get_version() -> str:
+    try:
+        return _pkg_version("xrayctl")
+    except PackageNotFoundError:
+        return "unknown"
 
 
 def _require(value: str | None, name: str) -> str:
@@ -38,6 +46,10 @@ def main() -> None:
             return
         
         h = getattr(args, "handler", None)
+
+        if h == "version":
+            print_out({"ok": True, "version": _get_version()}, fmt=settings.fmt)
+            return
 
         if h == "config_init":
             out = config_wf.init_config(args.config)
@@ -130,6 +142,7 @@ def main() -> None:
                 repo_page_size=args.repo_page_size,
                 repo_regex=args.repo_regex,
                 include_repo_metadata=args.include_repo_metadata,
+                verbose=args.verbose,
             )
             print_out(out, fmt=settings.fmt)
             return
