@@ -12,12 +12,9 @@ Unlike the official JFrog CLI, `xrayctl` is designed to:
 ## Features
 
 - Xray connectivity check (`ping`)
-- Ignore rule management
-  - create
-  - list
-  - get by ID
-- Artifact scanning (on-demand, artifact-only)
-- Artifact inventory refresh across **all repositories**
+- Ignore rule management — create, list (with full filtering + auto-pagination), get by ID
+- Artifact scanning — on-demand trigger with optional `--wait` polling
+- Artifact inventory refresh across **all repositories** with optional repo regex filter
 - Local artifact cache (Parquet / CSV) for offline analysis
 - Explicit config management (`xrayctl config …`)
 
@@ -29,16 +26,78 @@ Unlike the official JFrog CLI, `xrayctl` is designed to:
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
+```
 
+### First-time setup
 
-# Initialize config
+```bash
+# Create a default config file
 xrayctl config init
 
-# Set Xray URL
+# Set your Xray URL
 xrayctl config set url https://jfrog.example.com
 
-# Set token (or export XRAY_TOKEN env var)
+# Set your token (or use the XRAY_TOKEN env var instead)
 xrayctl config set token YOUR_TOKEN
 
 # Verify connectivity
 xrayctl ping
+```
+
+## Configuration
+
+Settings are resolved in this priority order (highest wins):
+
+| Source | Example |
+| --- | --- |
+| CLI flag | `--url https://jfrog.example.com` |
+| Environment variable | `XRAY_URL`, `XRAY_TOKEN`, `XRAY_PROJECT`, `XRAY_TIMEOUT`, `XRAY_FORMAT` |
+| Config file | `~/.config/xrayctl/config.yaml` |
+
+## Output
+
+All commands output JSON by default. Pass `--format yaml` for YAML.
+
+```bash
+xrayctl ping --format yaml
+xrayctl ignore-rules list --all --format yaml
+```
+
+## Exit codes
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Success |
+| `1` | Validation or configuration error |
+| `2` | Xray API HTTP error |
+
+## Running tests
+
+```bash
+pip install -e ".[test]"
+pytest
+pytest -v        # verbose
+pytest -x        # stop on first failure
+```
+
+## Quick examples
+
+```bash
+# List all ignore rules
+xrayctl ignore-rules list --all
+
+# Create an ignore rule (dry-run first)
+xrayctl ignore-rules create --note "assess later" --cve CVE-2024-1234 --watch my-watch --dry-run
+
+# Trigger a scan and wait for it to finish
+xrayctl scan artifact \
+  --component-id docker://alpine:3.20 \
+  --repo my-docker-repo \
+  --path alpine/3.20 \
+  --wait
+
+# Refresh artifact inventory for prod repos only
+xrayctl artifacts refresh --out artifacts.parquet --repo-regex "^prod-"
+```
+
+For full command reference see [docs/commands.md](docs/commands.md).
